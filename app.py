@@ -173,17 +173,17 @@ def search():
                 
     # 一日以内
     else:
-        with open('result.json', mode='rb') as f:
-            json_open = json.dumps(result_format)
-            json_load = json.load(json_open)
-    '''
+        json_open = open('./result.json', 'r')
+        json_load = json.load(json_open)
+
+        for i in range(json_load['hit_number']):
+            json_load['results'][i]['published']
+    
         # フロント側が受け取りやすい形で出す
         result_format = {
-            'hit_number': len(news_list),
-            'results': news_list,
-            'elapsed_days': 0
+            'status':'hello world!'
         }   
-    '''
+
     # 利用時刻を記録
     with open('log.txt', mode='wb') as f:
         f.write(str(dt_current).encode())
