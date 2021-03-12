@@ -31,6 +31,26 @@ app.config['JSON_AS_ASCII'] = False
 curl -X POST http://127.0.0.1:5000/search?from=2021/3/2&to=2021/3/3&q=福島県,農業,大学生
 '''
 
+def conditional_search(json_load,dt_from,dt_to):
+    send = []
+    for i in range(json_load['hit_number']):
+        pub_date = json_load['results'][i]['published']
+        tz = re.findall('T.*Z',pub_date)
+        pub_date = pub_date.replace(tz[0],'')
+        pub_date = datetime.datetime.strptime(pub_date, '%Y-%m-%d')
+        # もしも期間内であったら追加
+        if dt_from <= pub_date <= dt_to:
+            send.append(json_load['results'][i])
+
+    # フロント側が受け取りやすい形で出す
+    result_format = {
+        'hit_number': len(send),
+        'results': send,
+        'elapsed_days': 0
+    }
+
+    return result_format
+
 @app.route('/')
 def hello_world():
     return "Curation tool"
@@ -109,9 +129,9 @@ def search():
     PREFCTURE = ''
     CATEGORY = ''
     # parameter: from,to,prefecture,city,category,q
-    if request.args.get('from') is None:
+    if request.args.get('from') is not None:
         FROM = request.args.get('from')
-    if request.args.get('to') is None:
+    if request.args.get('to') is not None:
         TO = request.args.get('to')
     if request.args.get('prefecture') is None:
         PREFCTURE = request.args.get('prefecture')
@@ -129,6 +149,10 @@ def search():
         time = f.readline().decode()
         dt_previous = datetime.datetime.strptime(time, '%Y-%m-%d')
 
+    # 期間指定のパラメーター
+    dt_to = datetime.datetime.strptime(TO, '%Y/%m/%d')
+    dt_from = datetime.datetime.strptime(FROM, '%Y/%m/%d')
+
 
     # 最終アクセスから一日以上経過してたら調べる
     td = dt_current - dt_previous.date()
@@ -144,13 +168,13 @@ def search():
             entries_data = rss_dic.entries
             article = {}
             for j in (reversed(entries_data)):
-                if 'published' in j:
-                    article['published'] = j.published
                 if 'title' in j:
                     article['title'] = j.title
                 if 'link' in j:
                     article['link'] = j.link
-                news_list.append(article)
+                if 'published' in j:
+                    article['published'] = j.published
+            news_list.append(article)
 
         # 取得してきたニュースをレコメンドすべきか判断
         dct = Dictionary.load_from_text("word/all_id2word.txt")
@@ -167,29 +191,32 @@ def search():
             'results': result,
             'elapsed_days': td.days
         }
+
+        #　AIが推論した結果を条件付きで絞ることなく保存
         with open('result.json', mode='wb') as f:
             d = json.dumps(result_format)
             f.write(d.encode())
+
+        # 最後にリクエストされた条件にマッチしたものに絞る
+        curation_data = conditional_search(result_format,dt_from,dt_to)
+
                 
     # 一日以内
     else:
+        # 初回時に生成されたデータを読み込み
         json_open = open('./result.json', 'r')
         json_load = json.load(json_open)
 
-        for i in range(json_load['hit_number']):
-            json_load['results'][i]['published']
-    
-        # フロント側が受け取りやすい形で出す
-        result_format = {
-            'status':'hello world!'
-        }   
+        # 最後にリクエストされた条件にマッチしたものに絞る
+        curation_data = conditional_search(json_load,dt_from,dt_to,)
+
 
     # 利用時刻を記録
     with open('log.txt', mode='wb') as f:
         f.write(str(dt_current).encode())
 
     return jsonify(
-        result_format
+        curation_data
     )
 
 @app.after_request

@@ -70,7 +70,7 @@ def predict(target,dct,classifier,bow_docs):
         if ans[0] == 1:
             send.append(target[i])
 
-    return  send
+    return send
 
 def main():
     target = 'PTA連合会でも使途不明金 「極めて遺憾」会長の河村元官房長官'
