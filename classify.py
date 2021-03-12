@@ -11,7 +11,7 @@ import pandas as pd
 import gensim
 import gensim.parsing
 import sys
-
+from janome.tokenizer import Tokenizer
 import preprocessing
 import learning
 
@@ -49,9 +49,9 @@ def predict(target,dct,classifier,bow_docs):
         stop_words = frozenset(fd.read().splitlines())
 
     send = []
-
+    t = Tokenizer()
     for i in range(len(target)):
-        article_target = preprocessing.preprocessing(target[i]['title'],stop_words)
+        article_target = preprocessing.preprocessing(target[i]['title'],stop_words,t)
         sparse = dct.doc2bow(article_target)
         sparse= lsi_model[sparse]
         dense = learning.vec2dense(sparse, num_topics)
