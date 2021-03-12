@@ -169,7 +169,7 @@ def search():
         }
         with open('result.json', mode='wb') as f:
             d = json.dumps(result_format)
-            f.write(d)
+            f.write(d.encode())
                 
     # 一日以内
     else:

@@ -2,9 +2,7 @@ import sys
 import pandas as pd
 from janome.tokenizer import Tokenizer
 
-def preprocessing(pre_sentence,stop_words): #前処理をする関数
-    t = Tokenizer()
-
+def preprocessing(pre_sentence,stop_words,t): #前処理をする関数
     #分かち書き形式にする
     wakati = [
         token.surface for token in t.tokenize(pre_sentence)
