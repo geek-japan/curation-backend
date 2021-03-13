@@ -1,4 +1,3 @@
-
 from math import sqrt
 from tqdm import tqdm
 from sklearn.svm import SVC
@@ -12,8 +11,8 @@ import gensim
 import gensim.parsing
 import sys
 from janome.tokenizer import Tokenizer
-import preprocessing
-import learning
+from .import preprocessing
+from . import learning
 
 num_topics = 2
 
