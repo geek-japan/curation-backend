@@ -8,7 +8,6 @@ from .core.conditional_search import conditional_search
 
 
 def search_articles(request):
-
     #-- パラメーターを取得する --#
     q = ''
     FROM = ''
@@ -88,24 +87,3 @@ def search_articles(request):
         # 最後にリクエストされた条件にマッチしたものに絞る
         curation_data = conditional_search(result_format, dt_from, dt_to)
         return json.dumps(curation_data, ensure_ascii=False)
-    # # リクエスト本文からjsonを取得
-    # request_json = request.get_json()
-    # # クエリ文字列を取得
-    # if request.args and 'name' in request.args:
-    #     request_name = request.args.get('name')
-    # # jsonから条件を取得
-    # elif request_json and 'name' in request_json:
-    #     request_name = request_json['name']
-    # else:
-    #     request_name = ''
-    #
-    # db = firestore.Client()
-    #
-    # # whereでdocument内の条件に一致するデータを取得
-    # query = db.collection('user').where('name', '==', request_name)
-    # docs = query.get()
-    # users_list = []
-    # for doc in docs:
-    #     users_list.append(doc.to_dict())
-    # return_json = json.dumps({"users": users_list}, ensure_ascii=False)
-    # return return_json
