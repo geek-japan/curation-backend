@@ -1,0 +1,1 @@
+gcloud functions deploy hello_world --trigger-http --runtime=python39
