@@ -65,6 +65,12 @@ def search_articles(request):
                     article['published'] = j.published
             news_list.append(article)
 
+        # テスト用にすべての記事も保存
+        with open('/tmp/result-all.json', mode='wb') as f:
+            d = json.dumps(news_list)
+            f.write(d.encode())
+        upload_blob('/tmp/result-all.json', 'result-all.json')
+
         # 取得してきたニュースをレコメンドすべきか判断
         download_blob('word/all_id2word.txt', '/tmp/all_id2word.txt')
         dct = Dictionary.load_from_text("/tmp/all_id2word.txt")
@@ -95,7 +101,7 @@ def search_articles(request):
     # 一日以内
     else:
         # 初回時に生成されたデータを読み込み
-        download_blob('/result.json', '/tmp/result.json')
+        download_blob('result.json', '/tmp/result.json')
         json_open = open('/tmp/result.json', 'r')
         json_load = json.load(json_open)
 
