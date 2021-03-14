@@ -1,9 +1,13 @@
 from functions.searchArticles import search_articles
 from functions.cors import run_function_with_cors_enabled
 from functions.demo_fetchArticleDetail import demo_fetchArticleDetail
+from functions.fetchArticleDetail import fetchArticleDetail
 
 def search(request):
     return run_function_with_cors_enabled(request, search_articles)
+
+def detail(request):
+    return run_function_with_cors_enabled(request, fetchArticleDetail)
 
 def detail_demo(request):
     return run_function_with_cors_enabled(request, demo_fetchArticleDetail)
