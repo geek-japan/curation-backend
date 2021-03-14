@@ -1,5 +1,9 @@
 from functions.searchArticles import search_articles
-from flask import make_response
+from functions.cors import run_function_with_cors_enabled
+from functions.demo_fetchArticleDetail import demo_fetchArticleDetail
 
 def search(request):
-    return make_response(search_articles(request), 200)
+    return run_function_with_cors_enabled(request, search_articles)
+
+def demo_detail(request):
+    return run_function_with_cors_enabled(request, demo_fetchArticleDetail())
