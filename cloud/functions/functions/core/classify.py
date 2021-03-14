@@ -13,11 +13,13 @@ import sys
 from janome.tokenizer import Tokenizer
 from .import preprocessing
 from . import learning
+from .cloudstorage import download_blob, upload_blob
 
 num_topics = 2
 
 def make_bow(dct):
-    df = pd.read_csv('dataset/preprocessed/pre_mix_title.csv')
+    download_blob('dataset/preprocessed/pre_mix_title.csv', '/tmp/pre_mix_title.csv')
+    df = pd.read_csv('/tmp/pre_mix_title.csv')
     bow_docs = {}
     bow_docs_all_zeros = {}
     for i in range(len(df)):
@@ -44,7 +46,8 @@ def predict(target,dct,classifier,bow_docs):
     )
 
     # ストップワードの読み込み
-    with open('word/Japanese.txt') as fd:
+    download_blob('dataset/preprocessed/pre_mix_title.csv', '/tmp/pre_mix_title.csv')
+    with open('/tmp/pre_mix_title.csv') as fd:
         stop_words = frozenset(fd.read().splitlines())
 
     send = []
@@ -70,37 +73,3 @@ def predict(target,dct,classifier,bow_docs):
             send.append(target[i])
 
     return send
-
-def main():
-    target = 'PTA連合会でも使途不明金 「極めて遺憾」会長の河村元官房長官'
-
-    dct = Dictionary.load_from_text("word/all_id2word.txt")
-    bow_docs = make_bow(dct)
-
-    lsi_model = gensim.models.LsiModel(
-        bow_docs.values(),
-        id2word=dct.load_from_text('word/all_id2word.txt'),
-        num_topics=num_topics
-    )
-
-    target = preprocessing.preprocessing(target)
-    sparse = dct.doc2bow(target)
-    sparse= lsi_model[sparse]
-    dense = learning.vec2dense(sparse, num_topics)
-    norm = sqrt(sum(num**2 for num in dense))
-    unit_vec = [num / norm for num in dense]
-
-    if np.isnan(unit_vec[0]):
-        unit_vec[0] = 0
-        unit_vec[1] = 0
-    pre =[]
-    pre.append(unit_vec)
-
-    # モデルのオープン
-    with open('model.pickle', mode='rb') as f:
-        classifier = pickle.load(f)
-    ans = classifier.predict(pre)
-    print(ans[0])
-
-if __name__ == "__main__":
-    main()
