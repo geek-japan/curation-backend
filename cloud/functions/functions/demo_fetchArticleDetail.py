@@ -11,7 +11,7 @@ def demo_fetchArticleDetail(request):
     text = '記事の概要' + str(characters) + ''.join(["あ" for i in range(characters)])
 
     data = {
-        "imageUrl": "https://via.placeholder.com/" + color + "/150",
+        "imageUrl": "https://via.placeholder.com/150/" + color + "/808080",
         "abstract": text
     }
 
