@@ -16,7 +16,7 @@ import re
 import copy
 
 # コサイン類似度の閾値
-COS_NUM = 0.75
+COS_NUM = 0.85
 
 # トピック数
 num_topics = 2
@@ -53,7 +53,7 @@ def main():
     #model = gensim.models.KeyedVectors.load_word2vec_format('/model/model.vec', binary=False)
 
     # 全ての組み合わせの計算結果を保存する
-    print("類似キーワードの算出中")
+    # 類似キーワードの算出中 
     calc_data = {}
     for i in tqdm(range(len(dct_words))):
         for j in range(i+1,len(dct_words)):
@@ -101,8 +101,8 @@ def main():
     filtered = dct.token2id.keys()
     filtered_out = set(unfiltered) - set(filtered)
 
-    print("特徴語")
-    print(dct.token2id.keys(), "(%d words)" % len(dct.token2id.keys()), '\n')   
+    #print("特徴語")
+    #print(dct.token2id.keys(), "(%d words)" % len(dct.token2id.keys()), '\n')   
 
     # 辞書を保存
     dct_txt = "word/all_id2word.txt"
@@ -114,7 +114,7 @@ def main():
     for i in range(len(df)):
         sparse = dct.doc2bow(df['title'][i])
         
-        if i <= 99:
+        if df_wakati['tag'][i] == 1:
             bow_docs['local_{}'.format(i)] = sparse
             dense =vec2dense(sparse, num_terms=len(dct))
             bow_docs_all_zeros['local_{}'.format(i)] = all(d == 0 for d in dense)
@@ -132,7 +132,7 @@ def main():
     )
 
     for i in range(len(df)):
-        if i <= 99:
+        if df_wakati['tag'][i] == 1:
             vec = bow_docs['local_{}'.format(i)]
             sparse = lsi_model[vec]
             dense = vec2dense(sparse, num_topics)
@@ -146,29 +146,30 @@ def main():
     #--- データの正規化 ---#
     unit_vecs = {}
     for i in range(len(df)):
-        if  i<= 99:
+        if  df_wakati['tag'][i] == 1:
             vec = vec2dense(lsi_docs['local_{}'.format(i)], num_topics)
-            norm = sqrt(sum(num**2 for num in vec))
+            norm = sqrt(np.sum(num**2 for num in vec))
             unit_vec = [num / norm for num in vec]
             if np.isnan(unit_vec[0]):
-                unit_vec[0] = 0
-                unit_vec[1] = 0
+                for j in range(num_topics):
+                    unit_vec[j] = 0
             unit_vecs['local_{}'.format(i)] = unit_vec
         else:
             vec = vec2dense(lsi_docs['global_{}'.format(i)], num_topics)
-            norm = sqrt(sum(num**2 for num in vec))
+            norm = sqrt(np.sum(num**2 for num in vec))
             unit_vec = [num / norm for num in vec]
             if np.isnan(unit_vec[0]):
-                unit_vec[0] = 0
-                unit_vec[1] = 0
+                for j in range(num_topics):
+                    unit_vec[j] = 0
             unit_vecs['global_{}'.format(i)] = unit_vec
 
     #--- SVMによる学習と２クラス分類 ---#
     names = []
-    for i in range(100):
-        names.append('local_{}'.format(i))
-    for i in range(100,212):
-        names.append('global_{}'.format(i))
+    for i in range(len(df)):
+        if df_wakati['tag'][i] == 1:
+            names.append('local_{}'.format(i))
+        else:
+            names.append('global_{}'.format(i))
 
     # 2クラス分類
     all_data = [unit_vecs[name] for name in names if re.match("local", name)]
@@ -188,12 +189,10 @@ def main():
     predict_label = classifier.predict(test_data)
 
     target_names = ["class 'local'", "class 'global'"]
-    print(classification_report(test_label, predict_label,target_names=target_names))
+    #print(classification_report(test_label, predict_label,target_names=target_names))
 
     with open('model.pickle', mode='wb') as fp:
         pickle.dump(classifier, fp)
-
-
 
 
 if __name__ == "__main__":

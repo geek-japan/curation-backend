@@ -169,11 +169,16 @@ def search():
             article = {}
             for j in (reversed(entries_data)):
                 if 'title' in j:
-                    article['title'] = j.title
+                    article_title = j.title
+                    # メディア名の削除
+                    article_title = re.sub("\(.+?\)", "", article_title)
+                    article['title'] = article_title
                 if 'link' in j:
                     article['link'] = j.link
                 if 'published' in j:
                     article['published'] = j.published
+                if 'description' in j:
+                    article['description'] = j.description
             news_list.append(article)
 
         # 取得してきたニュースをレコメンドすべきか判断
