@@ -11,6 +11,7 @@ import feedparser
 import json
 # 日付
 import datetime
+import pandas as pd
 
 #　自作ライブラリ
 import classify
@@ -35,9 +36,9 @@ def conditional_search(json_load,dt_from,dt_to):
     send = []
     for i in range(json_load['hit_number']):
         pub_date = json_load['results'][i]['published']
-        tz = re.findall('T.*Z',pub_date)
-        pub_date = pub_date.replace(tz[0],'')
-        pub_date = datetime.datetime.strptime(pub_date, '%Y-%m-%d')
+        pub_date=pd.to_datetime(pub_date,utc=True)
+        dt_from=pd.to_datetime(dt_from,utc=True)
+        dt_to=pd.to_datetime(dt_to,utc=True)
         # もしも期間内であったら追加
         if dt_from <= pub_date <= dt_to:
             send.append(json_load['results'][i])
@@ -145,6 +146,7 @@ def search():
     # 現在時刻
     dt_current = datetime.date.today()
     # log.txtから最終利用時刻を調べる
+    dt_previous=None
     with open('log.txt', mode='rb') as f:
         time = f.readline().decode()
         dt_previous = datetime.datetime.strptime(time, '%Y-%m-%d')
@@ -166,8 +168,8 @@ def search():
         for i in json_load:
             rss_dic = feedparser.parse(json_load[i])
             entries_data = rss_dic.entries
-            article = {}
             for j in (reversed(entries_data)):
+                article = {}
                 if 'title' in j:
                     article_title = j.title
                     # メディア名の削除
@@ -179,12 +181,13 @@ def search():
                     article['published'] = j.published
                 if 'description' in j:
                     article['description'] = j.description
-            news_list.append(article)
+                news_list.append(article)
 
         # 取得してきたニュースをレコメンドすべきか判断
         dct = Dictionary.load_from_text("word/all_id2word.txt")
         # モデルのオープン
-        with open('model.pickle', mode='rb') as f:
+        classifier=None
+        with open('model_1_1.pickle', mode='rb') as f:
             classifier = pickle.load(f)
         # Bowの作成
         bow_docs = classify.make_bow(dct)

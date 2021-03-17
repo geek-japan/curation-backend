@@ -114,7 +114,7 @@ def main():
     for i in range(len(df)):
         sparse = dct.doc2bow(df['title'][i])
         
-        if df_wakati['tag'][i] == 1:
+        if df['tag'][i] == 1:
             bow_docs['local_{}'.format(i)] = sparse
             dense =vec2dense(sparse, num_terms=len(dct))
             bow_docs_all_zeros['local_{}'.format(i)] = all(d == 0 for d in dense)
@@ -132,7 +132,7 @@ def main():
     )
 
     for i in range(len(df)):
-        if df_wakati['tag'][i] == 1:
+        if df['tag'][i] == 1:
             vec = bow_docs['local_{}'.format(i)]
             sparse = lsi_model[vec]
             dense = vec2dense(sparse, num_topics)
@@ -146,7 +146,7 @@ def main():
     #--- データの正規化 ---#
     unit_vecs = {}
     for i in range(len(df)):
-        if  df_wakati['tag'][i] == 1:
+        if  df['tag'][i] == 1:
             vec = vec2dense(lsi_docs['local_{}'.format(i)], num_topics)
             norm = sqrt(np.sum(num**2 for num in vec))
             unit_vec = [num / norm for num in vec]
@@ -166,7 +166,7 @@ def main():
     #--- SVMによる学習と２クラス分類 ---#
     names = []
     for i in range(len(df)):
-        if df_wakati['tag'][i] == 1:
+        if df['tag'][i] == 1:
             names.append('local_{}'.format(i))
         else:
             names.append('global_{}'.format(i))

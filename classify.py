@@ -18,7 +18,7 @@ import learning
 num_topics = 4
 
 def make_bow(dct):
-    df = pd.read_csv('dataset/preprocessed/pre_mix_title.csv')
+    df = pd.read_csv('dataset/preprocessed/pre_tokenized.csv')
     bow_docs = {}
     bow_docs_all_zeros = {}
     for i in range(len(df)):
@@ -26,7 +26,7 @@ def make_bow(dct):
         word = word.split(',')
         sparse = dct.doc2bow(word)
         
-        if df_wakati['tag'][i] == 1:
+        if df['tag'][i] == 1:
             bow_docs['local_{}'.format(i)] = sparse
             dense = learning.vec2dense(sparse, num_terms=len(dct))
             bow_docs_all_zeros['local_{}'.format(i)] = all(d == 0 for d in dense)
@@ -44,12 +44,15 @@ def predict(target,dct,classifier,bow_docs):
         num_topics=num_topics
     )
 
+    stop_words=None
     # ストップワードの読み込み
     with open('word/Japanese.txt') as fd:
         stop_words = frozenset(fd.read().splitlines())
 
     send = []
     t = Tokenizer()
+    pre =[]
+    print(len(target))
     for i in range(len(target)):
         article_target = preprocessing.preprocessing(target[i]['title'],stop_words,t)
         sparse = dct.doc2bow(article_target)
@@ -58,18 +61,17 @@ def predict(target,dct,classifier,bow_docs):
         norm = sqrt(np.sum(num**2 for num in dense))
         #unit_vec = [num / norm for num in dense]
         unit_vec = [np.divide(num, norm, out=np.zeros_like(num), where=num!=0) for num in dense]
-
         if np.isnan(unit_vec[0]):
             for j in range(num_topics):
                 unit_vec[j] = 0
-        pre =[]
         pre.append(unit_vec)
-
-        # 推論
-        ans = classifier.predict(pre)
-        if ans[0] == 1:
+    # 推論
+    ans = classifier.predict(pre)
+    print(ans)
+    for i in range(len(ans)):
+        if ans[i] == 1:
             send.append(target[i])
-
+    print(send)
     return send
 
 def main():
@@ -97,6 +99,7 @@ def main():
     pre =[]
     pre.append(unit_vec)
 
+    classifier=None
     # モデルのオープン
     with open('model.pickle', mode='rb') as f:
         classifier = pickle.load(f)
