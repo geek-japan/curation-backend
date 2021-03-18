@@ -15,7 +15,7 @@ from .import preprocessing
 from . import learning
 from .cloudstorage import download_blob, upload_blob
 
-num_topics = 2
+num_topics = 4
 
 def make_bow(dct):
     download_blob('dataset/preprocessed/pre_mix_title.csv', '/tmp/pre_mix_title.csv')
@@ -27,7 +27,7 @@ def make_bow(dct):
         word = word.split(',')
         sparse = dct.doc2bow(word)
         
-        if i <= 99:
+        if df_wakati['tag'][i] == 1:
             bow_docs['local_{}'.format(i)] = sparse
             dense = learning.vec2dense(sparse, num_terms=len(dct))
             bow_docs_all_zeros['local_{}'.format(i)] = all(d == 0 for d in dense)
@@ -57,13 +57,13 @@ def predict(target,dct,classifier,bow_docs):
         sparse = dct.doc2bow(article_target)
         sparse= lsi_model[sparse]
         dense = learning.vec2dense(sparse, num_topics)
-        norm = sqrt(sum(num**2 for num in dense))
+        norm = sqrt(np.sum(num**2 for num in dense))
         #unit_vec = [num / norm for num in dense]
         unit_vec = [np.divide(num, norm, out=np.zeros_like(num), where=num!=0) for num in dense]
 
         if np.isnan(unit_vec[0]):
-            unit_vec[0] = 0
-            unit_vec[1] = 0
+            for j in range(num_topics):
+                unit_vec[j] = 0
         pre =[]
         pre.append(unit_vec)
 
@@ -73,3 +73,37 @@ def predict(target,dct,classifier,bow_docs):
             send.append(target[i])
 
     return send
+
+def main():
+    target = 'PTA連合会でも使途不明金 「極めて遺憾」会長の河村元官房長官'
+
+    dct = Dictionary.load_from_text("word/all_id2word.txt")
+    bow_docs = make_bow(dct)
+
+    lsi_model = gensim.models.LsiModel(
+        bow_docs.values(),
+        id2word=dct.load_from_text('word/all_id2word.txt'),
+        num_topics=num_topics
+    )
+
+    target = preprocessing.preprocessing(target)
+    sparse = dct.doc2bow(target)
+    sparse= lsi_model[sparse]
+    dense = learning.vec2dense(sparse, num_topics)
+    norm = sqrt(np.sum(num**2 for num in dense))
+    unit_vec = [num / norm for num in dense]
+
+    if np.isnan(unit_vec[0]):
+        for j in range(num_topics):
+            unit_vec[j] = 0
+    pre =[]
+    pre.append(unit_vec)
+
+    # モデルのオープン
+    with open('model.pickle', mode='rb') as f:
+        classifier = pickle.load(f)
+    ans = classifier.predict(pre)
+    #print(ans[0])
+
+if __name__ == "__main__":
+    main()
