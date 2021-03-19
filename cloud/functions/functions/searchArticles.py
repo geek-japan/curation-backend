@@ -2,6 +2,7 @@ import json
 import pickle
 import datetime
 import feedparser
+import re
 from gensim.corpora import Dictionary
 from .core.classify import make_bow, predict
 from .core.conditional_search import conditional_search
@@ -32,6 +33,7 @@ def search_articles(request):
     # 現在時刻
     dt_current = datetime.date.today()
     # log.txtから最終利用時刻を調べる
+    dt_previous = None
     download_blob('log.txt', '/tmp/log.txt')
     with open('/tmp/log.txt', mode='rb') as f:
         time = f.readline().decode()
@@ -43,7 +45,6 @@ def search_articles(request):
 
     # 最終アクセスから一日以上経過してたら調べる
     td = dt_current - dt_previous.date()
-
     # 一日以上経過していたとき
     if td.days > 0:
         # 取得ニュースを格納する配列
@@ -55,28 +56,27 @@ def search_articles(request):
         for i in json_load:
             rss_dic = feedparser.parse(json_load[i])
             entries_data = rss_dic.entries
-            article = {}
             for j in (reversed(entries_data)):
+                article = {}
                 if 'title' in j:
-                    article['title'] = j.title
+                    article_title = j.title
+                    # メディア名の削除
+                    article_title = re.sub("\(.+?\)", "", article_title)
+                    article['title'] = article_title
                 if 'link' in j:
                     article['link'] = j.link
                 if 'published' in j:
                     article['published'] = j.published
-            news_list.append(article)
-
-        # テスト用にすべての記事も保存
-        with open('/tmp/result-all.json', mode='wb') as f:
-            d = json.dumps(news_list)
-            f.write(d.encode())
-        upload_blob('/tmp/result-all.json', 'result-all.json')
+                if 'description' in j:
+                    article['description'] = j.description
+                news_list.append(article)
 
         # 取得してきたニュースをレコメンドすべきか判断
         download_blob('word/all_id2word.txt', '/tmp/all_id2word.txt')
         dct = Dictionary.load_from_text("/tmp/all_id2word.txt")
         # モデルのオープン
-        download_blob('model.pickle', '/tmp/model.pickle')
-        with open('/tmp/model.pickle', mode='rb') as f:
+        download_blob('model_1_1.pickle', '/tmp/model_1_1.pickle')
+        with open('/tmp/model_1_1.pickle', mode='rb') as f:
             classifier = pickle.load(f)
         # Bowの作成
         bow_docs = make_bow(dct)
@@ -89,11 +89,22 @@ def search_articles(request):
             'elapsed_days': td.days
         }
 
+        news_list_format = {
+            'hit_number': len(news_list),
+            'results': news_list,
+            'elapsed_days': td.days
+        }
+
         # 　AIが推論した結果を条件付きで絞ることなく保存
         with open('/tmp/result.json', mode='wb') as f:
             d = json.dumps(result_format)
             f.write(d.encode())
         upload_blob('/tmp/result.json', 'result.json')
+
+        with open('/tmp/all-result.json', mode='wb') as f:
+            d = json.dumps(news_list_format)
+            f.write(d.encode())
+        upload_blob('/tmp/all-result.json', 'all-result.json')
 
         # 最後にリクエストされた条件にマッチしたものに絞る
         curation_data = conditional_search(result_format, dt_from, dt_to)
@@ -106,7 +117,7 @@ def search_articles(request):
         json_load = json.load(json_open)
 
         # 最後にリクエストされた条件にマッチしたものに絞る
-        curation_data = conditional_search(json_load, dt_from, dt_to, )
+        curation_data = conditional_search(json_load, dt_from, dt_to)
 
     # 利用時刻を記録
     with open('/tmp/log.txt', mode='wb') as f:

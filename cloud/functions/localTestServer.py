@@ -5,6 +5,7 @@ from functions.demo_fetchArticleDetail import demo_fetchArticleDetail
 from functions.fetchArticleDetail import fetchArticleDetail
 
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
 
 @app.route('/search', methods=['GET'])
 def search():
