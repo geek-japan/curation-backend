@@ -75,8 +75,8 @@ def search_articles(request):
         download_blob('word/all_id2word.txt', '/tmp/all_id2word.txt')
         dct = Dictionary.load_from_text("/tmp/all_id2word.txt")
         # モデルのオープン
-        download_blob('model_1_1.pickle', '/tmp/model_1_1.pickle')
-        with open('/tmp/model_1_1.pickle', mode='rb') as f:
+        download_blob('model_2.pickle', '/tmp/model_2.pickle')
+        with open('/tmp/model_2.pickle', mode='rb') as f:
             classifier = pickle.load(f)
         # Bowの作成
         bow_docs = make_bow(dct)
