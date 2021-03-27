@@ -52,7 +52,7 @@ def predict(target, dct, classifier, bow_docs):
     pre = []
     print(len(target))
     for i in range(len(target)):
-        article_target = preprocessing.preprocessing(target[i]['title'], stop_words, t)
+        article_target = preprocessing.preprocessing(target[i]['title'] + ' ' + target[i]['description'], stop_words, t)
         sparse = dct.doc2bow(article_target)
         sparse = lsi_model[sparse]
         dense = learning.vec2dense(sparse, num_topics)
@@ -72,39 +72,3 @@ def predict(target, dct, classifier, bow_docs):
     print(send)
     return send
 
-
-def main():
-    target = 'PTA連合会でも使途不明金 「極めて遺憾」会長の河村元官房長官'
-
-    dct = Dictionary.load_from_text("word/all_id2word.txt")
-    bow_docs = make_bow(dct)
-
-    lsi_model = gensim.models.LsiModel(
-        bow_docs.values(),
-        id2word=dct.load_from_text('word/all_id2word.txt'),
-        num_topics=num_topics
-    )
-
-    target = preprocessing.preprocessing(target)
-    sparse = dct.doc2bow(target)
-    sparse = lsi_model[sparse]
-    dense = learning.vec2dense(sparse, num_topics)
-    norm = sqrt(np.sum(num ** 2 for num in dense))
-    unit_vec = [num / norm for num in dense]
-
-    if np.isnan(unit_vec[0]):
-        for j in range(num_topics):
-            unit_vec[j] = 0
-    pre = []
-    pre.append(unit_vec)
-
-    classifier = None
-    # モデルのオープン
-    with open('model.pickle', mode='rb') as f:
-        classifier = pickle.load(f)
-    ans = classifier.predict(pre)
-    # print(ans[0])
-
-
-if __name__ == "__main__":
-    main()
