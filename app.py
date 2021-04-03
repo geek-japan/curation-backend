@@ -1,6 +1,5 @@
 # バックエンドライブラリ
 import os
-from flask_cors import CORS
 from flask import *
 import pprint
 #スクレイピング関連ライブラリ
@@ -19,7 +18,6 @@ import classify
 # AI関連ライブラリ
 from gensim.corpora import Dictionary
 import pickle
-import classify
 
 #　使用ツールで主となる検索ワード
 TARGET = '地方創生'

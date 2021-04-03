@@ -67,8 +67,8 @@ def predict(target, dct, classifier, bow_docs):
     ans = classifier.predict(pre)
     print(ans)
     for i in range(len(ans)):
-        if ans[i] == 1:
-            send.append(target[i])
+        target[i]['isLocalArticle'] = str(ans[i])
+        send.append(target[i])
     print(send)
     return send
 
