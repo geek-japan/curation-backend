@@ -17,5 +17,5 @@ def detail(request):
 def detail_demo(request):
     return run_function_with_cors_enabled(request, demo_fetchArticleDetail)
 
-def fetch_articles(request):
-    return run_function_with_cors_enabled(request, crawl_new_article)
+def fetch_articles(event, context):
+    return crawl_new_article(context)
